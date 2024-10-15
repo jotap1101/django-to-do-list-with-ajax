@@ -1,0 +1,445 @@
+{% extends 'base/base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <!-- Navbar -->
+    {% include 'partials/navbar.html' %}
+
+    <!-- Conteúdo principal -->
+    <main class="container mt-3 mb-5">
+        {% if messages %}
+        <div class="alert-container">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-0">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="d-flex flex-column flex-md-row justify-content-between my-3 gap-3 gap-md-0">
+            <!-- Button trigger modal -->
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                data-bs-target="#createTaskModal">Adicionar</button>
+
+            <!-- Formulário de pesquisa e filtro -->
+            <form action="{% url 'app:filter_task' %}" method="get" id="filterTask"
+                class="d-flex flex-column-reverse flex-md-row justify-content-end gap-3 w-md-50">
+                <!-- Select para filtrar por status -->
+                <div class="form-group">
+                    <select class="form-select" id="status-filter" name="status">
+                        <option value="">Selecione uma opção</option>
+                        {% for st in status %}
+                        <option value="{{ st.id }}">{{ st.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Input de pesquisa -->
+                <div class="form-group flex-grow-1">
+                    <input type="search" class="form-control" id="search" name="task" placeholder="Pesquisar">
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal de adicionar tarefa -->
+        <div class="modal fade" id="createTaskModal" tabindex="-1" aria-labelledby="createTaskModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{% url 'app:create_task' %}" method="post" id="create-task-form"
+                        class="needs-validation" novalidate>
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="createTaskModalLabel">Adicionar Tarefa</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% csrf_token %}
+
+                            {{ create_task_form.title|as_crispy_field }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            <button type="submit" class="btn btn-primary">Adicionar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de editar tarefa -->
+        <div class="modal fade" id="updateTaskModal" tabindex="-1" aria-labelledby="updateTaskModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="{% url 'app:update_task' 0 %}" method="post" id="update-task-form"
+                        class="needs-validation" novalidate>
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="updateTaskModalLabel">Editar Tarefa</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            {% csrf_token %}
+
+                            {{ update_task_form|crispy }}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                            <button type="submit" class="btn btn-success">Salvar alterações</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Div que irá conter a tabela e que será rolável -->
+        <div class="table-container table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <caption>Lista de tarefas</caption>
+                <thead class="text-center">
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Título</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Criado em</th>
+                        <th scope="col">Atualizado em</th>
+                        <th scope="col">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    {% for task in tasks %}
+                    <tr id="{{ task.id }}">
+                        <td scope="row">{{ task.id }}</td>
+                        <td scope="row" class="task-title {% if task.status.id == 3 %}task-completed{% endif %}">
+                            {{ task.title }}
+                        </td>
+                        <td scope="row">{{ task.status }}</td>
+                        <td scope="row">{{ task.created_at }}</td>
+                        <td scope="row">{{ task.updated_at }}</td>
+                        <td class="">
+                            <button type="button" class="btn btn-warning btn-sm update-task" data-bs-toggle="modal"
+                                data-bs-target="#updateTaskModal" data-task-id="{{ task.id }}">Editar</button>
+                            <button type="button" class="btn btn-danger btn-sm delete-task mt-2 mt-xl-0"
+                                data-task-id="{{ task.id }}">Excluir</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">Nenhuma tarefa encontrada</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    {% include 'partials/footer.html' %}
+{% endblock content %}
+
+{% block js %}
+    <script>
+        $(document).ready(function () {
+            function createTask() {
+                const form = $('#create-task-form');  // Seleciona o formulário de criação
+                const url = form.attr('action');  // URL da view Django para criar tarefa
+                const modal = $('#createTaskModal');  // Modal de criação de tarefa
+
+                $.ajax({
+                    url: url, // URL da view Django para criar tarefa
+                    method: 'POST', // Método POST
+                    data: form.serialize(),  // Serializa os dados do formulário para enviar
+                    success: function (response) {
+                        // Adiciona a nova tarefa na tabela
+                        const newRow = `
+                            <tr id="${response.task.id}">
+                                <td scope="row">${response.task.id}</td>
+                                <td scope="row" class="task-title">${response.task.title}</td>
+                                <td scope="row">${response.task.status}</td>
+                                <td scope="row">${response.task.created_at}</td>
+                                <td scope="row">${response.task.updated_at}</td>
+                                <td scope="row">
+                                    <button type="button" class="btn btn-warning btn-sm update-task" data-bs-toggle="modal" data-task-id="${response.task.id}">Editar</button>
+                                    <button type="button" class="btn btn-danger btn-sm delete-task" data-task-id="${response.task.id}">Excluir</button>
+                                </td>
+                            </tr>
+                        `;
+
+                        $('tbody').append(newRow);  // Adiciona a nova linha na tabela
+
+                        form[0].reset(); // Limpa o formulário
+                        modal.modal('hide'); // Fecha o modal
+
+                        showAlert(response.message, 'success'); // Mostra o alerta de sucesso
+                    },
+                    error: function (response) {
+                        // Verifica se já existe um feedback de erro
+                        if (!$('.invalid-feedback').length) {
+                            $('#id_title').after('<div class="invalid-feedback"></div>');
+                        }
+
+                        const errors = JSON.parse(response.responseText).errors; // Obtém os erros da resposta
+
+                        // Verifica se há erros no campo de título
+                        if (errors.title) {
+                            $('.invalid-feedback').text(errors.title[0]).show();
+                        }
+
+                        $('#id_title').addClass('is-invalid'); // Adiciona a classe 'is-invalid' ao campo de título
+                    }
+                });
+            }
+
+            function readTask(taskId, callback) {
+                // Faz uma requisição para obter os dados da tarefa
+                $.ajax({
+                    url: `/task/${taskId}/read/`,  // URL da view que retorna os dados da tarefa
+                    method: 'GET', // Método GET
+                    success: function (response) {
+                        // Verifica se a função de callback é uma função
+                        if (typeof callback === "function") {
+                            callback(response.task);  // Retorna a tarefa via callback
+                        }
+                    },
+                    error: function () {
+                        showAlert('Erro ao obter os dados da tarefa.', 'danger'); // Mostra o alerta de erro
+                    }
+                });
+            }
+
+            function updateTask(taskId) {
+                readTask(taskId, function (task) {
+                    const form = $('#update-task-form');  // Seleciona o formulário de edição
+                    const url = form.attr('action').replace('0', taskId);  // Substitui o '0' no action pela id da tarefa
+                    const modal = $('#updateTaskModal');  // Modal de edição de tarefa
+
+                    data = JSON.stringify({
+                        title: $('#update-task-title').val(), // Obtém o valor do campo de título
+                        status: $('#update-task-status').val(), // Obtém o valor do campo de status
+                    });
+
+                    $.ajax({
+                        url: url, // URL da view Django para atualizar a tarefa
+                        method: 'PUT',  // Alterando para PUT
+                        contentType: 'application/json',  // Define o tipo de conteúdo como JSON
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Adiciona o token CSRF no cabeçalho
+                        },
+                        data: data, // Envia os dados da tarefa
+                        success: function (response) {
+                            // Atualiza a linha da tabela correspondente
+                            const updatedRow = `
+                                <tr id="${response.task.id}">
+                                    <td scope="row">${response.task.id}</td>
+                                    <td scope="row" class="task-title">${response.task.title}</td>
+                                    <td scope="row">${response.task.status}</td>
+                                    <td scope="row">${response.task.created_at}</td>
+                                    <td scope="row">${response.task.updated_at}</td>
+                                    <td scope="row">
+                                        <button type="button" class="btn btn-warning btn-sm update-task" data-bs-toggle="modal" data-task-id="${response.task.id}">Editar</button>
+                                        <button type="button" class="btn btn-danger btn-sm delete-task" data-task-id="${response.task.id}">Excluir</button>
+                                    </td>
+                                </tr>
+                            `;
+
+                            $(`#${response.task.id}`).replaceWith(updatedRow);  // Substitui a linha pela atualizada
+
+                            // Verifica se o status é "Finalizada" e aplica o estilo
+                            if (response.task.status === '✅Finalizada') {
+                                $(`#${response.task.id} .task-title`).addClass('task-completed');
+                            } else {
+                                $(`#${response.task.id} .task-title`).removeClass('task-completed');
+                            }
+
+
+                            form[0].reset(); // Limpa o formulário
+                            modal.modal('hide'); // Fecha o modal
+
+                            showAlert(response.message, 'success'); // Mostra o alerta de sucesso
+                        },
+                        error: function (response) {
+                            // Verifica se já existe um feedback de erro
+                            if (!$('.invalid-feedback').length) {
+                                $('#update-task-title').after('<div class="invalid-feedback"></div>');
+                            }
+
+                            const errors = JSON.parse(response.responseText).errors; // Obtém os erros da resposta
+
+                            // Verifica se há erros no campo de título
+                            if (errors.title) {
+                                $('.invalid-feedback').text(errors.title[0]).show();
+                            }
+
+                            // Verifica se há erros no campo de status
+                            if (errors.status) {
+                                $('.invalid-feedback').text(errors.status[0]).show();
+                            }
+
+                            $('#update-task-title').addClass('is-invalid'); // Adiciona a classe 'is-invalid' ao campo de título
+                        }
+                    });
+                });
+            }
+
+            function deleteTask(taskId) {
+                readTask(taskId, function (task) {
+                    const row = $(`#${task.id}`);  // Seleciona a linha da tabela referente à tarefa
+                    const confirmDelete = confirm('Você realmente deseja excluir esta tarefa?'); // Pergunta se deseja excluir
+
+                    // Se confirmar a exclusão
+                    if (confirmDelete) {
+                        $.ajax({
+                            url: `/task/${task.id}/delete/`,  // URL da view Django para deletar a tarefa
+                            method: 'DELETE', // Método DELETE
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'  // Adiciona o token CSRF no cabeçalho
+                            },
+                            success: function () {
+                                row.remove();  // Remove a linha da tabela correspondente
+
+                                showAlert('Tarefa excluída com sucesso.', 'success'); // Mostra o alerta de sucesso
+                            },
+                            error: function () {
+                                showAlert('Erro ao excluir a tarefa.', 'danger'); // Mostra o alerta de erro
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Evento de submit no formulário de criação de tarefa
+            $('#create-task-form').submit(function (event) {
+                event.preventDefault();  // Impede o envio padrão do formulário
+                createTask();  // Chama a função createTask para tratar o AJAX
+            });
+
+            // Evento de submit no formulário de edição de tarefa
+            $('#update-task-form').submit(function (event) {
+                event.preventDefault();  // Impede o envio padrão do formulário
+                const taskId = $(this).attr('action').match(/\/task\/(\d+)\/update\//)[1];  // Extrai o ID da URL
+                updateTask(taskId);  // Chama a função updateTask para tratar o AJAX
+            });
+
+            // Função para chamar a exclusão de tarefa ao clicar no botão de exclusão
+            $(document).on('click', '.delete-task', function () {
+                const taskId = $(this).data('task-id');  // Obtém o ID da tarefa
+                deleteTask(taskId);  // Chama a função deleteTask
+            });
+
+            // Preenche o modal de edição ao clicar no botão 'Editar'
+            $(document).on('click', '.update-task', function () {
+                const taskId = $(this).data('task-id');  // Obtém o ID da tarefa
+
+                // Chama a função readTask para obter os dados da tarefa
+                readTask(taskId, function (task) {
+                    $('#update-task-title').val(task.title); // Preenche o campo de título
+                    $('#update-task-status').val(task.status_id).change(); // Preenche o campo de status
+                    $('#update-task-form').attr('action', `/task/${task.id}/update/`); // Atualiza a URL do formulário
+                    $('#updateTaskModal').modal('show');  // Abre o modal de edição
+                });
+            });
+
+            // Função para limpar erros e classes de validação ao fechar qualquer modal e ao digitar no campo novamente
+            function clearFormErrors(modalId, formId) {
+                // Remove erros ao fechar o modal
+                $(modalId).on('hidden.bs.modal', function () {
+                    const form = $(formId); // Seleciona o formulário
+                    form[0].reset();  // Reseta o formulário
+                    form.find('.is-invalid').removeClass('is-invalid');  // Remove a classe 'is-invalid'
+                    form.find('.invalid-feedback').remove();  // Remove as mensagens de erro
+                });
+
+                // Remove erros automaticamente quando o usuário começa a digitar no campo novamente
+                $(formId).find('input, select, textarea').on('input', function () {
+                    $(this).removeClass('is-invalid');  // Remove a classe 'is-invalid' ao digitar
+                    $(this).next('.invalid-feedback').remove();  // Remove o feedback de erro
+                });
+            }
+
+            // Chama a função para ambos os modais
+            clearFormErrors('#createTaskModal', '#create-task-form');
+            clearFormErrors('#updateTaskModal', '#update-task-form');
+
+            // Função para mostrar alertas
+            function showAlert(message, type) {
+                // Cria o HTML do alerta
+                const alertHtml = `
+                    <div class="alert alert-${type} alert-dismissible fade show mb-0" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                `;
+
+                $('main').prepend(alertHtml); // Adiciona o alerta como primeiro filho direto do main
+
+                // Fecha o alerta automaticamente após 3 segundos
+                setTimeout(() => {
+                    $('.alert').alert('close'); // Fecha automaticamente após 3 segundos
+                }, 3000); // 3000 milissegundos = 3 segundos
+            }
+
+            // Função para filtrar tarefas
+            function filterTask() {
+                const form = $('#filterTask'); // Seleciona o formulário
+                const url = form.attr('action'); // Obtém a URL da ação do formulário
+
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    data: form.serialize(), // Serializa os dados do formulário
+                    success: function (response) {
+                        // Atualiza a tabela com os dados recebidos
+
+                        const tbody = $('tbody'); // Seleciona o corpo da tabela
+
+                        // Remove todas as linhas da tabela
+                        tbody.empty();
+
+                        // Verifica se há tarefas
+                        if (response.tasks.length) {
+                            // Para cada tarefa, cria uma nova linha na tabela
+                            response.tasks.forEach(task => {
+                                // Verifica se a tarefa está completada (supondo que 3 é o ID do status "finalizado")
+                                const isCompleted = task.status_id == 3 ? ' task-completed' : '';
+
+                                const newRow = `
+                                    <tr id="${task.id}">
+                                        <td scope="row">${task.id}</td>
+                                        <td scope="row" class="task-title${isCompleted}">${task.title}</td>
+                                        <td scope="row">${task.status}</td> <!-- Use task.status.name para mostrar o nome -->
+                                        <td scope="row">${task.created_at}</td>
+                                        <td scope="row">${task.updated_at}</td>
+                                        <td scope="row">
+                                            <button type="button" class="btn btn-warning btn-sm update-task" data-bs-toggle="modal" data-bs-target="#updateTaskModal" data-task-id="${task.id}">Editar</button>
+                                            <button type="button" class="btn btn-danger btn-sm delete-task" data-task-id="${task.id}">Excluir</button>
+                                        </td>
+                                    </tr>
+                                `;
+
+                                tbody.append(newRow); // Adiciona a nova linha na tabela
+                            });
+                        } else {
+                            // Se não houver tarefas, exibe uma mensagem na tabela
+                            const newRow = `
+                                <tr>
+                                    <td colspan="6" class="text-center">Nenhuma tarefa encontrada</td>
+                                </tr>
+                            `;
+
+                            tbody.append(newRow); // Adiciona a nova linha na tabela
+                        }
+                    },
+                    error: function () {
+                        alert('Erro ao filtrar tarefas.');
+                    }
+                });
+            }
+
+            // Chama a função filterTask() quando há alteração nos campos do formulário
+            $('#status-filter, #search').on('change keyup input', function () {
+                filterTask();
+            });
+        });
+    </script>
+{% endblock js %}

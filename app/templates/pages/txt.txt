@@ -1,0 +1,117 @@
+$(document).ready(function () {
+            // Captura o evento de submissão do formulário de criação de tarefa
+            $('#create-task-form').submit(function (event) {
+                event.preventDefault(); // Impede o comportamento padrão de recarregar a página
+
+                // Envia o formulário via AJAX
+                $.ajax({
+                    url: '{% url "app:create_task" %}', // URL da rota
+                    method: 'POST',
+                    data: $(this).serialize(), // Serializa os dados do formulário
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            // Fecha o modal
+                            $('#exampleModal').modal('hide');
+
+                            // Adiciona a nova tarefa à tabela
+                            $('tbody').append(`
+                                <tr id="${response.task.id}">
+                                    <td>${response.task.id}</td>
+                                    <td>${response.task.title}</td>
+                                    <td>${response.task.status}</td>
+                                    <td>${response.task.created_at}</td>
+                                    <td>${response.task.updated_at}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-warning btn-sm update-task" data-task-id="${response.task.id}">Editar</a>
+                                        <a href="#" class="btn btn-danger btn-sm delete-task" data-task-id="${response.task.id}">Excluir</a>
+                                    </td>
+                                </tr>
+                            `);
+
+                            // Limpa o formulário
+                            $('#create-task-form')[0].reset();
+                        } else {
+                            // Cria a div de feedback de erro se não existir
+                            if (!$('.invalid-feedback').length) {
+                                $('#id_title').after('<div class="invalid-feedback"></div>');
+                            }
+                            // Exibe a mensagem de erro
+                            $('.invalid-feedback').text(response.errors.title).show();
+                            $('#id_title').addClass('is-invalid');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.log(xhr.responseText); // Loga qualquer erro inesperado
+                        $('.invalid-feedback').text('Ocorreu um erro inesperado. Tente novamente mais tarde.').show(); // Exibe a mensagem de erro
+                    }
+                });
+            });
+
+            $('tbody').on('click', '.update-task', function (e) {
+                e.preventDefault(); // Previne o comportamento padrão do link
+
+                var taskId = $(this).data('task-id'); // Pega o ID da tarefa
+                var row = $(this).closest('tr'); // Seleciona a linha correspondente da tabela
+
+                console.log(taskId);
+
+                // Recupere os dados da tarefa via AJAX e printe no console apenas
+                $.ajax({
+                    url: `/task/${taskId}/read/`, // URL da rota de detalhes
+                    method: 'GET',
+                    success: function (response) {
+                        console.log(response.task);
+                    },
+                    error: function (xhr) {
+                        console.log(xhr.responseText); // Loga qualquer erro inesperado
+                        alert('Ocorreu um erro inesperado. Tente novamente mais tarde.'); // Exibe a mensagem de erro
+                    }
+                });
+            });
+
+            // Event delegation para capturar o clique no link de exclusão
+            $('tbody').on('click', '.delete-task', function (e) {
+                e.preventDefault();  // Previne o comportamento padrão do link
+
+                var taskId = $(this).data('task-id');  // Pega o ID da tarefa
+                var row = $(this).closest('tr');  // Seleciona a linha correspondente da tabela
+
+                // Exibe o alerta de confirmação
+                if (confirm('Você tem certeza que deseja excluir esta tarefa?')) {
+                    // Envia a requisição AJAX para deletar a tarefa
+                    $.ajax({
+                        url: `/task/${taskId}/delete/`,  // URL da rota de exclusão
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'  // Necessário para requisição DELETE
+                        },
+                        success: function (response) {
+                            if (response.status === 'success') {
+                                // Remove a linha da tabela se a exclusão for bem-sucedida
+                                row.remove();
+                            } else {
+                                // Exibe uma mensagem de erro, se necessário
+                                alert('Erro ao excluir a tarefa.');
+                            }
+                        },
+                        error: function (xhr) {
+                            console.log(xhr.responseText);  // Loga qualquer erro inesperado
+                            alert('Ocorreu um erro inesperado. Tente novamente mais tarde.');  // Exibe a mensagem de erro
+                        }
+                    });
+                }
+            });
+
+            // Limpa as mensagens de erro e o estado do formulário ao fechar o modal
+            $('#exampleModal').on('hidden.bs.modal', function () {
+                $('.invalid-feedback').text('').hide(); // Limpa a mensagem de erro e a esconde
+                $('#id_title').removeClass('is-invalid'); // Remove a classe de erro do campo
+                $('#create-task-form')[0].reset(); // Limpa o formulário
+            });
+
+            // Evento para limpar a mensagem de erro ao começar a digitar no campo de título (após o primeiro erro e não fechar o modal)
+            $('#id_title').on('input', function () {
+                $('.invalid-feedback').text('').hide(); // Limpa a mensagem de erro e a esconde
+                $(this).removeClass('is-invalid'); // Remove a classe de erro do campo
+            });
+        });
