@@ -74,8 +74,16 @@ cd django-to-do-list-with-ajax
 
 Crie um ambiente virtual para isolar as dependências do projeto:
 
+- No Windows:
+
 ```bash
-python -m venv venv
+py -m venv venv
+```
+
+- No Linux/macOS:
+
+```bash
+python3 -m venv venv
 ```
 
 ### 3. Ativar Ambiente Virtual
