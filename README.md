@@ -209,9 +209,23 @@ python3 manage.py runserver
 
 ##### Acesse o projeto em `http://127.0.0.1:8000/`
 
+---
+
+## Screenshots
+
+![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222236.png)
+
+![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222253.png)
+
+![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222311.png)
+
+![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222333.png)
+
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT - consulte o arquivo [LICENSE](LICENSE) para obter detalhes.
+
+---
 
 ## Contato
 
