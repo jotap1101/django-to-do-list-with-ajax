@@ -213,13 +213,9 @@ python3 manage.py runserver
 
 ## Screenshots
 
-![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222236.png)
+![Captura de Tela](./screenshots/Screenshot%2001.png)
 
-![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222253.png)
-
-![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222311.png)
-
-![Captura de Tela](C:\Users\jotap\OneDrive\Imagens\Capturas de tela\Captura de tela 2024-10-15 222333.png)
+![Captura de Tela](./screenshots/Screenshot%2002.png)
 
 ## Licença
 
