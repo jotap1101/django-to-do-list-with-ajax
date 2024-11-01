@@ -70,7 +70,7 @@ Navegue até a pasta do projeto:
 cd django-to-do-list-with-ajax
 ```
 
-### 2. Criar Ambiente Virtual
+### 3. Criar Ambiente Virtual
 
 Crie um ambiente virtual para isolar as dependências do projeto:
 
@@ -86,7 +86,7 @@ py -m venv venv
 python3 -m venv venv
 ```
 
-### 3. Ativar Ambiente Virtual
+### 4. Ativar Ambiente Virtual
 
 Ative o ambiente virtual:
 
@@ -104,7 +104,7 @@ cd ../..
 source venv/bin/activate
 ```
 
-### 4. Instalar Dependências
+### 5. Instalar Dependências
 
 Instale as dependências do projeto:
 
@@ -120,7 +120,7 @@ pip install -r requirements.txt
 pip3 install -r requirements.txt
 ```
 
-### 5. Gerar a SECRET_KEY
+### 6. Gerar a SECRET_KEY
 
 Gere uma chave secreta para o projeto:
 
@@ -143,7 +143,7 @@ Gere uma chave secreta para o projeto:
 
 - Copie a chave gerada.
 
-### 6. Configurar Variáveis de Ambiente
+### 7. Configurar Variáveis de Ambiente
 
 Crie um arquivo `.env` de acordo com o arquivo `.env.example` e adicione a chave secreta gerada:
 
@@ -151,7 +151,7 @@ Crie um arquivo `.env` de acordo com o arquivo `.env.example` e adicione a chave
 SECRET_KEY = 'sua_secret_key'
 ```
 
-### 7. Criar as migrações
+### 8. Criar as migrações
 
 Crie as migrações do banco de dados:
 
@@ -167,7 +167,7 @@ py manage.py makemigrations
 python3 manage.py makemigrations
 ```
 
-### 8. Aplicar Migrações
+### 9. Aplicar Migrações
 
 Aplique as migrações no banco de dados:
 
@@ -183,7 +183,7 @@ py manage.py migrate
 python3 manage.py migrate
 ```
 
-### 9. Criar Superusuário
+### 10. Criar Superusuário
 
 Crie um superusuário para acessar o painel de administração:
 
@@ -199,7 +199,7 @@ py manage.py createsuperuser
 python3 manage.py createsuperuser
 ```
 
-### 10. Rodar o Servidor
+### 11. Rodar o Servidor
 
 Por fim, rode o servidor de desenvolvimento:
 
